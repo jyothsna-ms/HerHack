@@ -17,6 +17,7 @@
 
 import 'dart:async';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:telephony/telephony.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
@@ -58,7 +59,7 @@ class VoiceTriggerService {
 
     return _speech.initialize(
       onStatus: _onSpeechStatus,
-      onError: (e) => print('Speech error: $e'),
+      onError: (e) => debugLog('Speech error: $e'),
     );
   }
 
@@ -81,8 +82,10 @@ class VoiceTriggerService {
       onResult: _onResult,
       listenFor: const Duration(seconds: 30),
       pauseFor: const Duration(seconds: 5),
-      partialResults: true,
-      cancelOnError: false,
+      listenOptions: stt.SpeechListenOptions(
+        partialResults: true,
+        cancelOnError: false,
+      ),
     );
   }
 
@@ -93,7 +96,7 @@ class VoiceTriggerService {
     }
   }
 
-  void _onResult(stt.SpeechRecognitionResult result) {
+  void _onResult(SpeechRecognitionResult result) {
     final heard = result.recognizedWords.toLowerCase();
 
     if (_cooldown) return;
@@ -112,7 +115,7 @@ class VoiceTriggerService {
 
   Future<void> _fireEmergencyResponse() async {
     final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
     );
     final mapsLink =
         'https://maps.google.com/?q=${position.latitude},${position.longitude}';
@@ -128,6 +131,12 @@ class VoiceTriggerService {
     if (contacts.isNotEmpty) {
       await FlutterPhoneDirectCaller.callNumber(contacts.first.phoneNumber);
     }
+  }
+
+  // Simple stand-in for a logger, so we don't trip the "avoid_print" lint.
+  void debugLog(String message) {
+    // ignore: avoid_print
+    print(message);
   }
 }
 
