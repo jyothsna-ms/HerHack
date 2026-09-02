@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firefly — Smart Emergency Safety Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  :root{
+    --bg: #FFFFFF;
+    --cream: #FFF6EA;
+    --ink: #17101A;
+    --ink-soft: #6B5C67;
+    --coral: #FF3B57;
+    --coral-deep: #D81F3B;
+    --sage: #3F7A4E;
+    --sage-light: #EAF5EA;
+    --gold: #FFC93C;
+    --gold-deep: #E8A800;
+    --lilac: #7B61FF;
+    --lilac-light: #EFEBFF;
+    --line: var(--ink);
+    --shadow-sm: 4px 4px 0 var(--ink);
+    --shadow-md: 6px 6px 0 var(--ink);
+  }
+  *{ box-sizing: border-box; }
+  html{ -webkit-font-smoothing: antialiased; scroll-behavior:smooth; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.5;
+  }
+  h1,h2,h3, .display{
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .wrap{
+    max-width: 660px;
+    margin: 0 auto;
+    padding: 0 20px 90px;
+  }
+  .btn-reset{ font-family:inherit; border:none; background:none; cursor:pointer; }
+
+  /* ---------- Header ---------- */
+  header{
+    max-width: 660px;
+    margin: 0 auto;
+    padding: 22px 20px 18px;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-mark{
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--gold);
+    border: 2px solid var(--ink);
+  }
+  .brand-name{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size: 20px;
+  }
+  .stealth-toggle{
+    display:flex; align-items:center; gap:7px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border: 2px solid var(--ink);
+    border-radius: 30px;
+    background: var(--bg);
+    box-shadow: 3px 3px 0 var(--ink);
+    cursor:pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .stealth-toggle:hover{ transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
+  .stealth-toggle:active{ transform: translate(1px,1px); box-shadow: 2px 2px 0 var(--ink); }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    position:relative;
+    background: var(--coral);
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    padding: 46px 20px 40px;
+    text-align:center;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image: radial-gradient(rgba(255,255,255,0.35) 1.6px, transparent 1.6px);
+    background-size: 16px 16px;
+    opacity: 0.55;
+    pointer-events:none;
+  }
+  .hero-inner{ position:relative; z-index:1; }
+  .hero h1{
+    color: white;
+    font-size: clamp(30px, 7vw, 40px);
+    line-height: 1.1;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+  .hero p{
+    color: #FFE3E8;
+    font-size: 15.5px;
+    max-width: 360px;
+    margin: 12px auto 0;
+    font-weight: 500;
+  }
+
+  .sos-zone{
+    display:flex; flex-direction:column; align-items:center;
+    padding-top: 34px;
+    position:relative; z-index:1;
+  }
+  .sos-btn{
+    width: 188px; height: 188px;
+    border-radius: 50%;
+    border: 3px solid var(--ink);
+    cursor:pointer;
+    background: white;
+    color: var(--coral-deep);
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size: 24px;
+    box-shadow: 8px 8px 0 var(--ink);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background .15s ease, color .15s ease;
+  }
+  .sos-btn:active{ transform: translate(4px,4px); box-shadow: 4px 4px 0 var(--ink); }
+  .sos-btn.arming{ animation: pulse 0.85s ease infinite; }
+  .sos-btn.armed{ background: var(--sage); color: white; }
+  @keyframes pulse{
+    0%,100%{ transform: scale(1); }
+    50%{ transform: scale(1.05); }
+  }
+  .sos-hint{
+    margin-top: 18px;
+    font-size: 13.5px;
+    color: white;
+    font-weight: 500;
+    text-align:center;
+  }
+  .sos-hint b{ font-weight:700; }
+  .press-counter{
+    margin-top: 10px;
+    font-size: 13px;
+    color: white;
+    font-weight: 700;
+    min-height: 18px;
+  }
+  .voice-row{
+    margin-top: 20px;
+    display:flex; flex-direction:column; align-items:center; gap: 10px;
+  }
+  .voice-indicator{
+    font-family:'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 9px 16px;
+    border: 2px solid var(--ink);
+    border-radius: 30px;
+    background: white;
+    color: var(--ink);
+    box-shadow: 3px 3px 0 var(--ink);
+    display:flex; align-items:center; gap: 9px;
+  }
+  .voice-dot{
+    width: 9px; height:9px;
+    border-radius: 50%;
+    background: #C9C0C6;
+    flex-shrink:0;
+  }
+  .voice-indicator.live .voice-dot{
+    background: var(--sage);
+    animation: voicepulse 1.4s ease infinite;
+  }
+  .voice-indicator.denied .voice-dot{ background: var(--coral); animation:none; }
+  @keyframes voicepulse{
+    0%,100%{ box-shadow: 0 0 0 0 rgba(63,122,78,0.55); }
+    50%{ box-shadow: 0 0 0 5px rgba(63,122,78,0); }
+  }
+  .voice-phrase-row{
+    display:flex;
+    align-items:center; gap: 8px;
+    font-size: 12px;
+    color: #FFE3E8;
+    font-weight: 600;
+  }
+  .voice-phrase-row input{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border: 2px solid var(--ink);
+    border-radius: 20px;
+    background: white;
+    color: var(--ink);
+    width: 110px;
+    text-align:center;
+  }
+  .voice-status{
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: white;
+    font-weight: 600;
+    min-height: 16px;
+    text-align:center;
+    max-width: 320px;
+  }
+
+  /* ---------- Section shell ---------- */
+  .section-label{
+    font-size: 22px;
+    margin: 46px 0 4px;
+  }
+  .section-sub{
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    margin-bottom: 16px;
+  }
+
+  .card{
+    background: var(--bg);
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    box-shadow: var(--shadow-md);
+    padding: 20px 20px 18px;
+    margin-top: 16px;
+  }
+
+  /* ---------- Quick actions ---------- */
+  .actions-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .action-card{
+    background: var(--bg);
+    border: 2px solid var(--ink);
+    border-radius: 16px;
+    padding: 16px 15px 14px;
+    text-align:left;
+    cursor:pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .action-card:nth-child(odd){ transform: rotate(-1deg); }
+  .action-card:nth-child(even){ transform: rotate(1deg); }
+  .action-card:hover{ transform: translate(-2px,-2px) rotate(0deg); box-shadow: 6px 6px 0 var(--ink); }
+  .action-icon{
+    width: 38px; height:38px;
+    border-radius: 10px;
+    border: 2px solid var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 17px;
+    margin-bottom: 10px;
+  }
+  .action-title{ font-weight: 700; font-size: 14.5px; margin-bottom: 3px; }
+  .action-sub{ font-size: 12.5px; color: var(--ink-soft); line-height:1.4; }
+  .action-card.siren-card{
+    background: var(--coral);
+    color: white;
+  }
+  .action-card.siren-card .action-icon{ background: white; }
+  .action-card.siren-card .action-sub{ color: #FFE3E8; }
+  .action-card.siren-card.playing{ background: var(--ink); }
+  .action-card.siren-card.playing .action-title::after{ content: " · playing"; font-weight:600; }
+
+  /* ---------- Walk with me ---------- */
+  .walk-head{ display:flex; align-items:center; justify-content:space-between; }
+  .walk-head h3{ font-size: 19px; }
+  .walk-desc{ font-size: 13px; color: var(--ink-soft); margin: 4px 0 16px; }
+  .duration-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 16px; }
+  .duration-chip{
+    padding: 8px 14px;
+    border: 2px solid var(--ink);
+    border-radius: 30px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor:pointer;
+    background: var(--bg);
+  }
+  .duration-chip.active{ background: var(--gold); }
+  .walk-display{
+    display:flex; align-items:center; gap: 18px;
+    background: var(--cream);
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .walk-countdown{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 40px;
+    min-width: 108px;
+  }
+  .walk-status{ font-size: 13px; color: var(--ink-soft); }
+  .walk-status b{ color: var(--ink); }
+  .walk-actions{ display:flex; gap: 10px; }
+  .walk-btn{
+    flex:1;
+    padding: 12px;
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor:pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .walk-btn:hover{ transform: translate(-1px,-1px); box-shadow: 5px 5px 0 var(--ink); }
+  .walk-btn:active{ transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--ink); }
+  .walk-btn.start{ background: var(--sage); color:white; }
+  .walk-btn.checkin{ background: var(--gold); }
+  .walk-btn.cancel{ background: var(--bg); }
+
+  /* ---------- Guardian streak / checklist ---------- */
+  .streak-card{ position:relative; }
+  .streak-badge{
+    position:absolute;
+    top:-14px; right: 16px;
+    background: var(--gold);
+    border: 2px solid var(--ink);
+    border-radius: 30px;
+    padding: 7px 14px 7px 10px;
+    font-size: 12.5px;
+    font-weight: 800;
+    transform: rotate(-4deg);
+    box-shadow: 3px 3px 0 var(--ink);
+    white-space:nowrap;
+  }
+  .checklist-head h3{ font-size: 19px; }
+  .checklist-desc{ font-size: 13px; color: var(--ink-soft); margin: 4px 0 14px; }
+  .week-strip{ display:flex; gap: 7px; margin-bottom: 18px; }
+  .week-dot{
+    flex:1;
+    text-align:center;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .week-dot .dot{
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    border: 2px solid var(--ink);
+    margin-bottom: 4px;
+    background: var(--bg);
+  }
+  .week-dot.filled .dot{ background: var(--sage); }
+  .week-dot.today{ color: var(--ink); }
+  .check-item{
+    display:flex; align-items:flex-start; gap: 12px;
+    padding: 10px 0;
+    border-top: 2px dashed #E7DCE3;
+    cursor:pointer;
+    user-select:none;
+  }
+  .check-item:first-of-type{ border-top: none; }
+  .check-box{
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--ink);
+    flex-shrink:0;
+    margin-top: 1px;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+  }
+  .check-item.done .check-box{ background: var(--coral); }
+  .check-text{ font-size: 14px; }
+  .check-title{ font-weight:700; }
+  .check-item.done .check-title{ text-decoration: line-through; color: var(--ink-soft); }
+  .check-note{ color: var(--ink-soft); font-size: 12.5px; margin-top: 1px; }
+  .checklist-cheer{
+    margin-top: 14px;
+    background: var(--gold);
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    display:none;
+  }
+  .checklist-cheer.show{ display:block; }
+
+  /* ---------- Safety map (Leaflet) ---------- */
+  .map-frame{
+    position:relative;
+    background: var(--cream);
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    overflow:hidden;
+    height: 300px;
+    margin-bottom: 12px;
+  }
+  #safetyMap{ width:100%; height:100%; }
+  .pin-marker{
+    width: 22px; height:22px;
+    border-radius: 50% 50% 50% 0;
+    border: 2px solid var(--ink);
+    transform: rotate(-45deg);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 2px 2px 0 rgba(23,16,26,0.35);
+  }
+  .pin-marker span{ transform: rotate(45deg); font-size: 10px; }
+  .pin-marker.safe{ background: var(--sage); }
+  .pin-marker.caution{ background: var(--gold); }
+  .pin-marker.risk{ background: var(--coral); }
+  .leaflet-popup-content-wrapper{
+    border: 2px solid var(--ink) !important;
+    border-radius: 12px !important;
+    box-shadow: 4px 4px 0 var(--ink) !important;
+  }
+  .leaflet-popup-tip{ border: 2px solid var(--ink) !important; }
+  .map-legend{ display:flex; gap: 14px; flex-wrap:wrap; margin-bottom: 14px; }
+  .legend-item{ display:flex; align-items:center; gap:6px; font-size: 12.5px; font-weight:600; color: var(--ink-soft); }
+  .legend-dot{ width:11px; height:11px; border-radius:50%; border:2px solid var(--ink); }
+  .legend-dot.safe{ background: var(--sage); }
+  .legend-dot.caution{ background: var(--gold); }
+  .legend-dot.risk{ background: var(--coral); }
+  .map-hint{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+    font-weight: 600;
+  }
+  .map-hint b{ color: var(--ink); }
+
+  .report-row{ display:flex; gap:8px; flex-wrap:wrap; }
+  .report-input{
+    flex: 1 1 140px;
+    padding: 10px 12px;
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    font-family:inherit;
+    font-size: 13px;
+  }
+  .report-select{
+    padding: 10px 12px;
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    font-family:inherit;
+    font-size: 13px;
+    background:white;
+  }
+  .report-btn{
+    padding: 10px 16px;
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    background: var(--lilac);
+    color:white;
+    font-weight:700;
+    font-size: 13px;
+    cursor:pointer;
+    box-shadow: var(--shadow-sm);
+  }
+  .report-btn:active{ transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--ink); }
+
+  /* ---------- Trusted circle / timeline ---------- */
+  .contact-row{ display:flex; align-items:center; gap: 12px; padding: 9px 0; }
+  .email-mode-note{
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    display:inline-block;
+  }
+  .email-mode-note.fallback{ background: var(--peach-soft, #FFF6EA); color: #8A5B2A; border: 2px solid var(--gold); }
+  .email-mode-note.ready{ background: var(--sage-light); color: var(--sage-dark, #3F7A4E); border: 2px solid var(--sage); }
+  .contact-notify{ display:flex; align-items:center; flex-shrink:0; }
+  .contact-notify input{
+    width: 18px; height: 18px;
+    accent-color: var(--sage);
+    cursor:pointer;
+  }
+  .contact-row + .contact-row{ border-top: 2px dashed #E7DCE3; }
+  .contact-avatar{
+    width: 34px; height:34px; border-radius: 50%;
+    border: 2px solid var(--ink);
+    background: var(--gold);
+    font-weight:800; font-size: 13px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .contact-name{ font-weight:700; font-size: 14px; }
+  .contact-sub{ font-size: 12px; color: var(--ink-soft); }
+  .contact-add{ margin-left:auto; font-size: 12.5px; color: var(--coral-deep); font-weight:800; background:none; border:none; cursor:pointer; }
+  .contact-remove{ margin-left:auto; font-size: 11.5px; color: var(--ink-soft); font-weight:700; background:none; border:none; cursor:pointer; }
+  .contact-form{
+    display:none;
+    flex-wrap:wrap;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px dashed #E7DCE3;
+  }
+  .contact-form.show{ display:flex; }
+  .contact-form input{
+    flex: 1 1 120px;
+    padding: 10px 12px;
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    font-family:inherit;
+    font-size: 13px;
+  }
+  .contact-form button{
+    padding: 10px 16px;
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    background: var(--sage);
+    color:white;
+    font-weight:700;
+    font-size: 13px;
+    cursor:pointer;
+    box-shadow: var(--shadow-sm);
+  }
+  .contact-form button:active{ transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--ink); }
+  .contact-form-hint{ font-size: 11.5px; color: var(--ink-soft); width:100%; margin-top:-2px; }
+
+  .timeline-row{ display:flex; gap: 12px; padding: 9px 0; }
+  .timeline-time{ font-size: 12px; color: var(--ink-soft); width: 56px; flex-shrink:0; padding-top:1px; font-weight:600; }
+  .timeline-dot-line{ width: 10px; display:flex; flex-direction:column; align-items:center; }
+  .timeline-dot{ width:9px; height:9px; border-radius:50%; border: 2px solid var(--ink); background: var(--sage); margin-top: 4px; flex-shrink:0; }
+  .timeline-text{ font-size: 13.5px; padding-top:1px; }
+
+  footer{ text-align:center; color: var(--ink-soft); font-size: 12px; margin-top: 50px; }
+
+  /* ---------- Fake call overlay ---------- */
+  .overlay{
+    position: fixed; inset: 0;
+    background: linear-gradient(180deg, #17101A, #0B070C);
+    display:none; flex-direction:column; align-items:center;
+    color: white; z-index: 60;
+  }
+  .overlay.show{ display:flex; }
+  .call-top{ margin-top: 14vh; text-align:center; }
+  .call-label{ font-size: 13px; color: #C9B9C4; margin-bottom: 10px; }
+  .call-avatar{ width: 92px; height:92px; border-radius:50%; background: var(--lilac); border: 3px solid white; margin: 0 auto 18px; }
+  .call-name{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size: 27px; }
+  .call-status{ font-size: 14px; color: #C9B9C4; margin-top: 6px; }
+  .call-actions{ margin-top: auto; margin-bottom: 8vh; display:flex; gap: 60px; }
+  .call-action{ display:flex; flex-direction:column; align-items:center; gap: 8px; background:none; border:none; color: white; font-size: 12.5px; cursor:pointer; }
+  .call-btn{ width: 58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size: 22px; border: 2px solid white; }
+  .call-btn.decline{ background: var(--coral); transform: rotate(135deg); }
+  .call-btn.accept{ background: var(--sage); }
+
+  /* ---------- Bottom sheet ---------- */
+  .sos-overlay{ position: fixed; inset:0; background: rgba(23,16,26,0.6); display:none; align-items:flex-end; justify-content:center; z-index: 55; }
+  .sos-overlay.show{ display:flex; }
+  .sos-sheet{
+    background: var(--bg); width: 100%; max-width: 660px;
+    border: 2px solid var(--ink); border-bottom:none;
+    border-radius: 22px 22px 0 0; padding: 26px 24px 34px; text-align:center;
+    animation: slideup 0.22s ease;
+  }
+  @keyframes slideup{ from{ transform: translateY(40px); opacity:0; } to{ transform: translateY(0); opacity:1; } }
+  .sos-sheet .badge{
+    width: 52px; height:52px; border-radius:50%;
+    background: var(--sage); border: 2px solid var(--ink);
+    color:white; font-size: 24px;
+    display:flex; align-items:center; justify-content:center; margin: 0 auto 14px;
+  }
+  .sos-sheet h3{ font-size: 20px; margin-bottom: 8px; }
+  .sos-sheet p{ font-size: 13.5px; color: var(--ink-soft); margin-bottom: 18px; }
+  .sheet-action-row{ display:flex; gap:8px; margin-bottom: 12px; }
+  .sheet-action-row button{
+    flex:1;
+    padding: 11px 8px;
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 12.5px;
+    cursor:pointer;
+    background: var(--bg);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .sheet-action-row button:active{ transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+  .sheet-action-row button.siren-active{ background: var(--coral); color:white; }
+  .sos-sheet button.close-btn{
+    background: var(--ink); color:white; border: 2px solid var(--ink);
+    border-radius: 14px; padding: 13px 20px; width:100%;
+    font-size: 14.5px; font-weight:700; font-family:inherit; cursor:pointer;
+  }
+
+  /* ---------- Stealth mode: fake calculator ---------- */
+  .stealth-overlay{
+    position: fixed; inset:0; background: #0E0E10;
+    display:none; flex-direction:column; z-index: 70;
+  }
+  .stealth-overlay.show{ display:flex; }
+  .calc-display{
+    flex: 1;
+    display:flex; align-items:flex-end; justify-content:flex-end;
+    color: white; font-size: 56px; font-weight: 300;
+    padding: 30px 26px; font-family: 'Inter', sans-serif;
+    user-select:none;
+  }
+  .calc-hint{
+    position:absolute; top: 10px; left:0; right:0;
+    text-align:center; font-size: 11px; color: #666;
+  }
+  .calc-grid{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: #2A2A2E;
+  }
+  .calc-key{
+    background: #1C1C1F;
+    color: white;
+    border:none;
+    font-size: 22px;
+    padding: 20px 0;
+    cursor:pointer;
+  }
+  .calc-key.op{ background: #FFA33C; }
+  .calc-key.func{ background: #3A3A3E; }
+  .calc-key.zero{ grid-column: span 2; text-align:left; padding-left: 34px; }
+
+  @media (prefers-reduced-motion: reduce){ .sos-btn.arming{ animation: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div class="brand-name">Firefly</div>
+  </div>
+  <button class="stealth-toggle" id="stealthToggle">🎭 Disguise</button>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <h1>One press. We take it from there.</h1>
+    <p>No unlocking, no explaining, no fumbling. Firefly reads the room even when you can't.</p>
+    <div class="sos-zone">
+      <button class="sos-btn" id="sosBtn">Press for SOS</button>
+      <div class="press-counter" id="pressCounter"></div>
+      <div class="sos-hint">Or just say <b>"bingo"</b> — or triple-tap the power button, screen off or on.</div>
+      <div class="voice-row">
+        <div class="voice-indicator" id="voiceIndicator">
+          <span class="voice-dot"></span>
+          <span id="voiceIndicatorText">Always listening for "bingo"</span>
+        </div>
+        <div class="voice-phrase-row" id="voicePhraseRow">
+          <span>change word:</span>
+          <input type="text" id="voicePhrase" value="bingo" spellcheck="false">
+        </div>
+      </div>
+      <div class="voice-status" id="voiceStatus"></div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+
+  <div class="section-label">Quick moves</div>
+  <div class="section-sub">Everything you might need, one tap away.</div>
+  <div class="actions-grid">
+    <button class="action-card" id="fakeCallBtn">
+      <div class="action-icon" style="background:var(--lilac-light);">📞</div>
+      <div class="action-title">Fake call me</div>
+      <div class="action-sub">Instant "incoming call" to excuse yourself, no questions asked.</div>
+    </button>
+    <button class="action-card" id="locationBtn">
+      <div class="action-icon" style="background:var(--gold);">📍</div>
+      <div class="action-title">Share live location</div>
+      <div class="action-sub">Pings your circle in real time, no explaining needed.</div>
+    </button>
+    <button class="action-card" id="safePlacesBtn">
+      <div class="action-icon" style="background:var(--sage-light);">🏥</div>
+      <div class="action-title">Safe places nearby</div>
+      <div class="action-sub">Police, hospitals & help centres closest to you.</div>
+    </button>
+    <button class="action-card" id="timelineBtn">
+      <div class="action-icon" style="background:#FFE3E8;">🕒</div>
+      <div class="action-title">Emergency timeline</div>
+      <div class="action-sub">A quiet log of what happened, and when.</div>
+    </button>
+    <button class="action-card siren-card" id="sirenBtn" style="grid-column: 1 / -1;">
+      <div class="action-icon">🔊</div>
+      <div class="action-title">Sound the alarm</div>
+      <div class="action-sub">Blasts a loud siren from your phone speaker to pull attention from people nearby. Tap again to stop.</div>
+    </button>
+  </div>
+
+  <div class="section-label">Walk with me</div>
+  <div class="section-sub">Set a check-in window. Go quiet on us, and we won't stay quiet.</div>
+  <div class="card">
+    <div class="duration-row" id="durationRow">
+      <button class="duration-chip" data-secs="900">15 min</button>
+      <button class="duration-chip" data-secs="1800">30 min</button>
+      <button class="duration-chip" data-secs="2700">45 min</button>
+      <button class="duration-chip" data-secs="10">Demo · 10s</button>
+    </div>
+    <div class="walk-display">
+      <div class="walk-countdown" id="walkCountdown">--:--</div>
+      <div class="walk-status" id="walkStatus">Pick a duration, then start. We'll check on you when time's up.</div>
+    </div>
+    <div class="walk-actions">
+      <button class="walk-btn start" id="walkStart">Start</button>
+      <button class="walk-btn checkin" id="walkCheckin" style="display:none;">I'm safe</button>
+      <button class="walk-btn cancel" id="walkCancel" style="display:none;">Cancel</button>
+    </div>
+  </div>
+
+  <div class="section-label">Guardian streak</div>
+  <div class="section-sub">Getting ready is half the armor.</div>
+  <div class="card streak-card">
+    <div class="streak-badge" id="streakBadge">🔥 5-day streak</div>
+    <div class="checklist-head">
+      <h3>Your going-out armor kit 🎒</h3>
+    </div>
+    <div class="checklist-desc">Tick these off before you head out — pepper spray counts as an accessory now.</div>
+    <div class="week-strip" id="weekStrip"></div>
+    <div id="checklistItems"></div>
+    <div class="checklist-cheer" id="checklistCheer">You're basically a superhero with a tote bag. 🦸‍♀️ Streak extended — go have fun.</div>
+  </div>
+
+  <div class="section-label">Community safety map</div>
+  <div class="section-sub">Tagged by people who've actually walked these streets. Real map, real streets.</div>
+  <div class="card">
+    <div class="map-legend">
+      <div class="legend-item"><span class="legend-dot safe"></span> Well-lit / safe</div>
+      <div class="legend-item"><span class="legend-dot caution"></span> Use caution</div>
+      <div class="legend-item"><span class="legend-dot risk"></span> Recently reported</div>
+    </div>
+    <div class="map-frame">
+      <div id="safetyMap"></div>
+    </div>
+    <div class="map-hint" id="mapHint">Tap anywhere on the map to drop a pin, then name it and add tag.</div>
+    <div class="report-row">
+      <input class="report-input" id="reportName" placeholder="Spot or street name">
+      <select class="report-select" id="reportLevel">
+        <option value="safe">Safe</option>
+        <option value="caution">Caution</option>
+        <option value="risk">Risky</option>
+      </select>
+      <button class="report-btn" id="reportBtn">Add tag</button>
+    </div>
+  </div>
+
+  <div class="section-label">Trusted circle</div>
+  <div class="section-sub">Check who should get the SOS email/text — uncheck anyone you don't want alerted right now.</div>
+  <div class="email-mode-note" id="emailModeNote"></div>
+  <div class="card">
+    <div id="contactList"></div>
+    <div class="contact-row">
+      <div class="contact-avatar">+</div>
+      <div><div class="contact-name">Add someone</div><div class="contact-sub">More eyes, more safety</div></div>
+      <button class="contact-add" id="addContactBtn">Add</button>
+    </div>
+    <div class="contact-form" id="contactForm">
+      <input type="text" id="newContactName" placeholder="Name">
+      <input type="email" id="newContactEmail" placeholder="Email">
+      <input type="tel" id="newContactPhone" placeholder="Phone (optional)">
+      <button id="saveContactBtn">Save contact</button>
+      <div class="contact-form-hint">Stored for this session only — nothing leaves your browser except the alert itself.</div>
+    </div>
+  </div>
+
+  <div class="section-label">Timeline preview</div>
+  <div class="card" id="timelineCard">
+    <div id="timelineRows"></div>
+  </div>
+
+  <footer>Built for the hack. Firefly stays quiet until you need it loud.</footer>
+</div>
+
+<!-- Fake call overlay -->
+<div class="overlay" id="callOverlay">
+  <div class="call-top">
+    <div class="call-label">incoming call</div>
+    <div class="call-avatar"></div>
+    <div class="call-name">Mumma 📱</div>
+    <div class="call-status" id="callStatus">mobile</div>
+  </div>
+  <div class="call-actions">
+    <button class="call-action" id="callDecline"><div class="call-btn decline">📞</div>Decline</button>
+    <button class="call-action" id="callAccept"><div class="call-btn accept">📞</div>Accept</button>
+  </div>
+</div>
+
+<!-- Bottom sheet -->
+<div class="sos-overlay" id="sosOverlay">
+  <div class="sos-sheet">
+    <div class="badge">✓</div>
+    <h3 id="sosSheetTitle">Help is on the way</h3>
+    <p id="sosSheetText">Your live location just went out to Amma and Riya S. Stay where you feel safest.</p>
+    <div class="sheet-action-row">
+      <button id="sheetSirenBtn">🔊 Siren on</button>
+      <button id="sheetEmailBtn">📧 Email location</button>
+      <button id="sheetTextBtn">📱 Text location</button>
+    </div>
+    <button class="close-btn" id="sosClose">Okay, I've got this</button>
+  </div>
+</div>
+
+<!-- Stealth mode: fake calculator -->
+<div class="stealth-overlay show" id="stealthOverlay">
+  <div class="calc-hint">"−" returns to the app · "1" sends SOS</div>
+  <div class="calc-display" id="calcDisplay">0</div>
+  <div class="calc-grid" id="calcGrid"></div>
+</div>
+
+<script>
+  // ================= EmailJS config (fill these in to enable real, automatic email sending) =================
+  // 1. Create a free account at https://www.emailjs.com
+  // 2. Add an Email Service (e.g. connect your Gmail) — copy its Service ID below.
+  // 3. Create an Email Template with variables {{to_email}}, {{to_name}}, {{location_link}}, {{sent_time}} — copy its Template ID below.
+  // 4. Copy your Public Key from Account > API Keys.
+  // Until these are filled in, SOS falls back to opening a mailto: draft instead.
+  const EMAILJS_CONFIG = {
+    serviceId: '',   // e.g. 'service_abc1234'
+    templateId: '',  // e.g. 'template_xyz789'
+    publicKey: '',   // e.g. 'AbCdEfGhIjKlMnOp'
+  };
+  const EMAILJS_READY = !!(EMAILJS_CONFIG.serviceId && EMAILJS_CONFIG.templateId && EMAILJS_CONFIG.publicKey && window.emailjs);
+  if(EMAILJS_READY){ emailjs.init(EMAILJS_CONFIG.publicKey); }
+  window.addEventListener('DOMContentLoaded', () => {
+    const note = document.getElementById('emailModeNote');
+    if(!note) return;
+    if(EMAILJS_READY){
+      note.textContent = '✓ Email delivery: EmailJS connected — SOS sends real emails automatically.';
+      note.className = 'email-mode-note ready';
+    } else {
+      note.textContent = '⚠ Email delivery: EmailJS not configured yet — SOS opens a mailto draft instead (needs a mail app to do anything visible). Add your EmailJS keys near the top of the script to enable real sending.';
+      note.className = 'email-mode-note fallback';
+    }
+  });
+
+  // ================= Checklist / Guardian streak =================
+  const checklist = [
+    { title: "Pepper spray", note: "Clipped somewhere you can reach in 2 seconds." },
+    { title: "Power bank, charged", note: "A dead phone can't call anyone." },
+    { title: "Trusted circle updated", note: "At least one person knows your plan tonight." },
+    { title: "Firefly gesture rehearsed", note: "Triple-tap or the phrase, practiced once." },
+    { title: "Safety whistle or alarm", note: "Loud, silly-looking, extremely effective." },
+  ];
+  const checklistState = new Array(checklist.length).fill(false);
+  const checklistItemsEl = document.getElementById('checklistItems');
+  const checklistCheerEl = document.getElementById('checklistCheer');
+  const streakBadge = document.getElementById('streakBadge');
+  let streak = 5;
+
+  function renderChecklist(){
+    checklistItemsEl.innerHTML = '';
+    checklist.forEach((item, i) => {
+      const row = document.createElement('div');
+      row.className = 'check-item' + (checklistState[i] ? ' done' : '');
+      row.innerHTML = `
+        <div class="check-box">${checklistState[i] ? '✓' : ''}</div>
+        <div class="check-text">
+          <div class="check-title">${item.title}</div>
+          <div class="check-note">${item.note}</div>
+        </div>`;
+      row.addEventListener('click', () => {
+        checklistState[i] = !checklistState[i];
+        renderChecklist();
+      });
+      checklistItemsEl.appendChild(row);
+    });
+    const allDone = checklistState.every(Boolean);
+    checklistCheerEl.classList.toggle('show', allDone);
+    renderWeekStrip(allDone);
+    streakBadge.textContent = allDone ? `🔥 ${streak}-day streak` : `🔥 ${streak - 1}-day streak`;
+  }
+
+  const weekStripEl = document.getElementById('weekStrip');
+  const days = ['M','T','W','T','F','S','S'];
+  function renderWeekStrip(todayFilled){
+    weekStripEl.innerHTML = '';
+    days.forEach((d, i) => {
+      const isToday = i === 4; // Friday demo "today"
+      const filled = i < 4 || (isToday && todayFilled);
+      const el = document.createElement('div');
+      el.className = 'week-dot' + (filled ? ' filled' : '') + (isToday ? ' today' : '');
+      el.innerHTML = `<div class="dot"></div>${d}`;
+      weekStripEl.appendChild(el);
+    });
+  }
+  renderChecklist();
+
+  // ================= Timeline =================
+  const timeline = [
+    { time: "7:42 PM", text: "Left campus, walking to bus stop" },
+    { time: "7:55 PM", text: "Checked in — all okay" },
+    { time: "8:10 PM", text: "Live location shared with Amma" },
+  ];
+  const timelineRowsEl = document.getElementById('timelineRows');
+  function addTimelineRow(time, text){
+    const el = document.createElement('div');
+    el.className = 'timeline-row';
+    el.innerHTML = `
+      <div class="timeline-time">${time}</div>
+      <div class="timeline-dot-line"><div class="timeline-dot"></div></div>
+      <div class="timeline-text">${text}</div>`;
+    timelineRowsEl.appendChild(el);
+  }
+  timeline.forEach(row => addTimelineRow(row.time, row.text));
+
+  // ================= Trusted contacts =================
+  let contacts = [
+    { name: 'Amma', email: 'amma@example.com', phone: '+919000000001', note: 'Notified first, always', notify: true },
+    { name: 'Riya S.', email: 'riya.roommate@example.com', phone: '+919000000002', note: 'Roommate · 2 min away', notify: true },
+  ];
+  const contactListEl = document.getElementById('contactList');
+  function initials(name){
+    return name.trim().split(/\s+/).map(w => w[0]).slice(0,2).join('').toUpperCase();
+  }
+  function renderContacts(){
+    contactListEl.innerHTML = '';
+    contacts.forEach((c, i) => {
+      const row = document.createElement('div');
+      row.className = 'contact-row';
+      row.innerHTML = `
+        <label class="contact-notify" title="Notify this person on SOS">
+          <input type="checkbox" data-i="${i}" ${c.notify ? 'checked' : ''}>
+        </label>
+        <div class="contact-avatar">${initials(c.name)}</div>
+        <div><div class="contact-name">${c.name}</div><div class="contact-sub">${c.note || c.email || c.phone || ''}</div></div>
+        <button class="contact-remove" data-i="${i}">Remove</button>`;
+      row.querySelector('.contact-remove').addEventListener('click', () => {
+        contacts.splice(i, 1);
+        renderContacts();
+      });
+      row.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+        contacts[i].notify = e.target.checked;
+      });
+      contactListEl.appendChild(row);
+    });
+  }
+  renderContacts();
+
+  const contactForm = document.getElementById('contactForm');
+  document.getElementById('addContactBtn').addEventListener('click', () => {
+    contactForm.classList.toggle('show');
+  });
+  document.getElementById('saveContactBtn').addEventListener('click', () => {
+    const nameEl = document.getElementById('newContactName');
+    const emailEl = document.getElementById('newContactEmail');
+    const phoneEl = document.getElementById('newContactPhone');
+    const name = nameEl.value.trim();
+    const email = emailEl.value.trim();
+    const phone = phoneEl.value.trim();
+    if(!name || !email){ nameEl.style.borderColor = 'var(--coral)'; emailEl.style.borderColor = !email ? 'var(--coral)' : 'var(--ink)'; return; }
+    contacts.push({ name, email, phone, note: email, notify: true });
+    renderContacts();
+    nameEl.value = ''; emailEl.value = ''; phoneEl.value = '';
+    nameEl.style.borderColor = 'var(--ink)'; emailEl.style.borderColor = 'var(--ink)';
+    contactForm.classList.remove('show');
+    addTimelineRow(nowTime(), `Added ${name} to trusted circle`);
+  });
+
+  // ================= Live location (for email/text alerts) =================
+  let lastKnownLocationLink = null;
+  function refreshLocation(cb){
+    if(!navigator.geolocation){ if(cb) cb(); return; }
+    navigator.geolocation.getCurrentPosition(
+      pos => { lastKnownLocationLink = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`; if(cb) cb(); },
+      () => { if(cb) cb(); },
+      { timeout: 4000 }
+    );
+  }
+  refreshLocation();
+
+  // Only contacts with their checkbox ticked receive the alert.
+  function buildEmailLink(){
+    const to = contacts.filter(c => c.notify && c.email).map(c => c.email).join(',');
+    const subject = encodeURIComponent('SOS — I need help');
+    const locText = lastKnownLocationLink ? `My live location: ${lastKnownLocationLink}` : "Location wasn't available — sending this alert anyway.";
+    const body = encodeURIComponent(`This is an automatic alert from Firefly.\n\n${locText}\n\nSent at ${nowTime()}.`);
+    return `mailto:${to}?subject=${subject}&body=${body}`;
+  }
+  function buildSmsLink(){
+    const numbers = contacts.filter(c => c.notify && c.phone).map(c => c.phone).join(',');
+    const locText = lastKnownLocationLink ? `Live location: ${lastKnownLocationLink}` : 'location unavailable';
+    const body = encodeURIComponent(`SOS from Firefly — I need help. ${locText}`);
+    return `sms:${numbers}?body=${body}`;
+  }
+
+  // Sends a real email via EmailJS if configured (see EMAILJS_CONFIG at the top of this
+  // script); otherwise falls back to opening a mailto: draft, which only does something
+  // visible if the browser has a mail app registered to handle it.
+  function sendSOSEmail(){
+    const targets = contacts.filter(c => c.notify && c.email);
+    if(targets.length === 0){
+      addTimelineRow(nowTime(), 'No selected contact has an email on file');
+      return;
+    }
+    const locText = lastKnownLocationLink || "Location wasn't available at send time.";
+    if(EMAILJS_READY){
+      targets.forEach(c => {
+        emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+          to_email: c.email,
+          to_name: c.name,
+          location_link: locText,
+          sent_time: nowTime(),
+        }).then(() => {
+          addTimelineRow(nowTime(), `Email actually sent to ${c.name} via EmailJS`);
+        }).catch(() => {
+          addTimelineRow(nowTime(), `Email to ${c.name} failed — check EmailJS service/template IDs`);
+        });
+      });
+    } else {
+      try{ window.location.href = buildEmailLink(); }catch(err){}
+      addTimelineRow(nowTime(), 'Opened a mailto draft (add EmailJS keys for real automatic sending)');
+    }
+  }
+
+  // ================= Siren (Web Audio API) =================
+  let audioCtx = null, sirenOsc = null, sirenGain = null, sirenInterval = null, sirenPlaying = false;
+  const sirenBtn = document.getElementById('sirenBtn');
+  const sheetSirenBtn = document.getElementById('sheetSirenBtn');
+  function playSiren(){
+    if(sirenPlaying) return;
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if(audioCtx.state === 'suspended'){ audioCtx.resume(); }
+      sirenOsc = audioCtx.createOscillator();
+      sirenGain = audioCtx.createGain();
+      sirenOsc.type = 'sawtooth';
+      sirenGain.gain.value = 0.18;
+      sirenOsc.frequency.value = 500;
+      sirenOsc.connect(sirenGain);
+      sirenGain.connect(audioCtx.destination);
+      sirenOsc.start();
+      sirenPlaying = true;
+      let up = true;
+      sirenInterval = setInterval(() => {
+        if(!sirenOsc) return;
+        sirenOsc.frequency.linearRampToValueAtTime(up ? 1300 : 500, audioCtx.currentTime + 0.5);
+        up = !up;
+      }, 500);
+    }catch(err){ /* Web Audio blocked — needs a user gesture first on some browsers */ }
+    updateSirenUI();
+  }
+  function stopSiren(){
+    if(!sirenPlaying) return;
+    clearInterval(sirenInterval);
+    try{ sirenOsc.stop(); sirenOsc.disconnect(); sirenGain.disconnect(); }catch(err){}
+    sirenOsc = null; sirenGain = null;
+    sirenPlaying = false;
+    updateSirenUI();
+  }
+  function updateSirenUI(){
+    sirenBtn.classList.toggle('playing', sirenPlaying);
+    sheetSirenBtn.textContent = sirenPlaying ? '🔇 Stop siren' : '🔊 Siren on';
+    sheetSirenBtn.classList.toggle('siren-active', sirenPlaying);
+  }
+  sirenBtn.addEventListener('click', () => { sirenPlaying ? stopSiren() : playSiren(); });
+  sheetSirenBtn.addEventListener('click', () => { sirenPlaying ? stopSiren() : playSiren(); });
+
+  // ================= SOS button =================
+  const sosBtn = document.getElementById('sosBtn');
+  const pressCounter = document.getElementById('pressCounter');
+  const sosOverlay = document.getElementById('sosOverlay');
+  const sosClose = document.getElementById('sosClose');
+  let pressCount = 0;
+  let pressTimer = null;
+
+  function nowTime(){
+    const d = new Date();
+    let h = d.getHours() % 12; if(h === 0) h = 12;
+    const m = String(d.getMinutes()).padStart(2,'0');
+    return `${h}:${m} ${d.getHours() >= 12 ? 'PM' : 'AM'}`;
+  }
+
+  sosBtn.addEventListener('click', () => triggerSosPress());
+  function triggerSosPress(){
+    pressCount++;
+    sosBtn.classList.add('arming');
+    if(pressCount === 1){ pressCounter.textContent = "Tap twice more to confirm — no accidents here."; }
+    if(pressCount === 2){ pressCounter.textContent = "One more."; }
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => { pressCount = 0; pressCounter.textContent = ''; sosBtn.classList.remove('arming'); }, 1800);
+    if(pressCount >= 3){
+      clearTimeout(pressTimer);
+      pressCount = 0;
+      fireSOS('tap');
+    }
+  }
+
+  // Shared SOS trigger — called by the triple-tap, the calculator panic key, and voice detection.
+  // Refreshes location and sends (or opens) the email alert. Siren is a separate manual action.
+  function fireSOS(source){
+    sosBtn.classList.remove('arming');
+    sosBtn.classList.add('armed');
+    sosBtn.textContent = 'Alert sent';
+    pressCounter.textContent = '';
+    const reasons = {
+      tap: 'SOS triggered — circle alerted',
+      voice: 'Voice trigger detected — SOS activated',
+      stealth: '"1" pressed in disguise mode — SOS activated',
+    };
+    const names = contacts.filter(c => c.notify).map(c => c.name).join(' and ') || 'your trusted circle';
+    showSheet('Help is on the way', `Alerting ${names} — pulling your live location and sending the email alert now.`);
+    addTimelineRow(nowTime(), reasons[source] || reasons.tap);
+    refreshLocation(() => sendSOSEmail());
+  }
+
+  function showSheet(title, text){
+    document.getElementById('sosSheetTitle').textContent = title;
+    document.getElementById('sosSheetText').textContent = text;
+    sosOverlay.classList.add('show');
+  }
+  sosClose.addEventListener('click', () => {
+    sosOverlay.classList.remove('show');
+    setTimeout(() => { sosBtn.classList.remove('armed'); sosBtn.textContent = 'Press for SOS'; }, 250);
+  });
+
+  document.getElementById('sheetEmailBtn').addEventListener('click', () => {
+    if(!contacts.some(c => c.notify && c.email)){ document.getElementById('sheetEmailBtn').textContent = 'No contact selected'; return; }
+    sendSOSEmail();
+  });
+  document.getElementById('sheetTextBtn').addEventListener('click', () => {
+    if(!contacts.some(c => c.notify && c.phone)){ document.getElementById('sheetTextBtn').textContent = 'No contact selected'; return; }
+    window.location.href = buildSmsLink();
+    addTimelineRow(nowTime(), 'Text alert sent manually');
+  });
+
+  document.getElementById('locationBtn').addEventListener('click', () => {
+    showSheet('Location on its way', "Your live location just went out to your trusted circle. It'll keep updating until you turn it off.");
+    addTimelineRow(nowTime(), 'Live location shared');
+  });
+  document.getElementById('safePlacesBtn').addEventListener('click', () => {
+    showSheet('Nearby & open now', "Closest picks: City Police Outpost (4 min walk), St. Anne's Hospital (7 min), Sunrise Help Centre (9 min).");
+  });
+  document.getElementById('timelineBtn').addEventListener('click', () => {
+    document.getElementById('timelineCard').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // ================= Fake call =================
+  const fakeCallBtn = document.getElementById('fakeCallBtn');
+  const callOverlay = document.getElementById('callOverlay');
+  const callStatus = document.getElementById('callStatus');
+  const callAccept = document.getElementById('callAccept');
+  const callDecline = document.getElementById('callDecline');
+  fakeCallBtn.addEventListener('click', () => { callStatus.textContent = 'mobile'; callOverlay.classList.add('show'); });
+  callDecline.addEventListener('click', () => callOverlay.classList.remove('show'));
+  callAccept.addEventListener('click', () => {
+    let seconds = 0;
+    const t = setInterval(() => {
+      seconds++;
+      const m = String(Math.floor(seconds/60)).padStart(2,'0');
+      const s = String(seconds%60).padStart(2,'0');
+      callStatus.textContent = `${m}:${s} — carry on, you've got this`;
+    }, 1000);
+    callAccept.style.visibility = 'hidden';
+    callDecline.querySelector('.call-btn').style.transform = 'rotate(0deg)';
+    callDecline.addEventListener('click', () => clearInterval(t), { once:true });
+  });
+
+  // ================= Walk with me =================
+  const durationRow = document.getElementById('durationRow');
+  const walkCountdown = document.getElementById('walkCountdown');
+  const walkStatus = document.getElementById('walkStatus');
+  const walkStart = document.getElementById('walkStart');
+  const walkCheckin = document.getElementById('walkCheckin');
+  const walkCancel = document.getElementById('walkCancel');
+  let selectedSecs = null;
+  let remaining = 0;
+  let walkTimer = null;
+
+  durationRow.addEventListener('click', (e) => {
+    const chip = e.target.closest('.duration-chip');
+    if(!chip || walkTimer) return;
+    [...durationRow.children].forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    selectedSecs = parseInt(chip.dataset.secs, 10);
+    remaining = selectedSecs;
+    renderWalkCountdown();
+    walkStatus.innerHTML = `Ready when you are.`;
+  });
+
+  function renderWalkCountdown(){
+    const m = String(Math.floor(remaining/60)).padStart(2,'0');
+    const s = String(remaining%60).padStart(2,'0');
+    walkCountdown.textContent = `${m}:${s}`;
+  }
+
+  walkStart.addEventListener('click', () => {
+    if(!selectedSecs){ walkStatus.textContent = "Pick a duration first."; return; }
+    walkStart.style.display = 'none';
+    walkCheckin.style.display = 'block';
+    walkCancel.style.display = 'block';
+    walkStatus.innerHTML = `We'll check on you when this hits zero.`;
+    walkTimer = setInterval(() => {
+      remaining--;
+      renderWalkCountdown();
+      if(remaining <= 0){
+        clearInterval(walkTimer);
+        walkTimer = null;
+        endWalk(false);
+        showSheet("You didn't check in", "Time's up on your walk-with-me window, so we alerted your trusted circle with your last known location.");
+        addTimelineRow(nowTime(), 'Walk-with-me timed out — circle alerted');
+      }
+    }, 1000);
+  });
+
+  walkCheckin.addEventListener('click', () => {
+    clearInterval(walkTimer); walkTimer = null;
+    endWalk(true);
+    addTimelineRow(nowTime(), "Checked in safe — walk-with-me ended");
+  });
+  walkCancel.addEventListener('click', () => { clearInterval(walkTimer); walkTimer = null; endWalk(true); });
+
+  function endWalk(safe){
+    walkStart.style.display = 'block';
+    walkCheckin.style.display = 'none';
+    walkCancel.style.display = 'none';
+    selectedSecs = null;
+    remaining = 0;
+    renderWalkCountdown();
+    walkCountdown.textContent = '--:--';
+    [...durationRow.children].forEach(c => c.classList.remove('active'));
+    walkStatus.textContent = safe ? "Glad you're safe. Set a new window anytime." : "Pick a duration, then start.";
+  }
+
+  // ================= Community safety map (Leaflet) =================
+  const FALLBACK_CENTER = { lat: 8.5241, lng: 76.9366 }; // used if geolocation is unavailable/denied
+  const mapHint = document.getElementById('mapHint');
+  let safetyMap = null, markersLayer = null, pendingLatLng = null, tempMarker = null, pins = [];
+
+  function pinIcon(level){
+    const glyph = level === 'safe' ? '✓' : level === 'caution' ? '!' : '⚠';
+    return L.divIcon({
+      html: `<div class="pin-marker ${level}"><span>${glyph}</span></div>`,
+      className: '',
+      iconSize: [22, 22],
+      iconAnchor: [11, 22],
+    });
+  }
+  function renderPins(){
+    markersLayer.clearLayers();
+    pins.forEach(p => {
+      L.marker([p.lat, p.lng], { icon: pinIcon(p.level) }).bindPopup(p.label).addTo(markersLayer);
+    });
+  }
+
+  function initMap(center){
+    safetyMap = L.map('safetyMap', { zoomControl: true }).setView([center.lat, center.lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(safetyMap);
+
+    markersLayer = L.layerGroup().addTo(safetyMap);
+    pins = [
+      { lat: center.lat + 0.004, lng: center.lng - 0.003, level: 'safe', label: 'Main road — well lit, busy' },
+      { lat: center.lat - 0.003, lng: center.lng + 0.004, level: 'caution', label: 'Back alley near shops — dim lighting' },
+      { lat: center.lat + 0.001, lng: center.lng + 0.006, level: 'risk', label: 'Underpass — reported twice this month' },
+    ];
+    renderPins();
+
+    safetyMap.on('click', (e) => {
+      pendingLatLng = e.latlng;
+      if(tempMarker) safetyMap.removeLayer(tempMarker);
+      tempMarker = L.marker(e.latlng, { opacity: 0.55 }).addTo(safetyMap);
+      mapHint.innerHTML = 'Pinned! Fill in a name and level below, then <b>Add tag</b>.';
+    });
+  }
+
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos => initMap({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => initMap(FALLBACK_CENTER),
+      { timeout: 5000 }
+    );
+  } else {
+    initMap(FALLBACK_CENTER);
+  }
+
+  document.getElementById('reportBtn').addEventListener('click', () => {
+    const nameInput = document.getElementById('reportName');
+    const level = document.getElementById('reportLevel').value;
+    const name = nameInput.value.trim() || 'Unnamed spot';
+    const loc = pendingLatLng || safetyMap.getCenter();
+    pins.push({ lat: loc.lat, lng: loc.lng, level, label: `${name} — tagged by you` });
+    renderPins();
+    if(tempMarker){ safetyMap.removeLayer(tempMarker); tempMarker = null; }
+    pendingLatLng = null;
+    mapHint.textContent = 'Tap anywhere on the map to drop a pin, then name it and add tag.';
+    nameInput.value = '';
+    addTimelineRow(nowTime(), `Tagged "${name}" on the safety map`);
+  });
+
+  // ================= Stealth mode (fake calculator) =================
+  const stealthToggle = document.getElementById('stealthToggle');
+  const stealthOverlay = document.getElementById('stealthOverlay');
+  const calcDisplay = document.getElementById('calcDisplay');
+  const calcGrid = document.getElementById('calcGrid');
+
+  const calcKeys = [
+    'C','±','%','÷',
+    '7','8','9','×',
+    '4','5','6','−',
+    '1','2','3','+',
+    '0','.','='
+  ];
+  let calcCurrent = '0', calcPrev = null, calcOp = null, calcReset = false;
+  function calcRender(){ calcDisplay.textContent = calcCurrent; }
+  function calcCompute(a,b,op){
+    a = parseFloat(a); b = parseFloat(b);
+    if(op==='+') return a+b;
+    if(op==='−') return a-b;
+    if(op==='×') return a*b;
+    if(op==='÷') return b === 0 ? 0 : a/b;
+    return b;
+  }
+  calcKeys.forEach(k => {
+    const btn = document.createElement('button');
+    const isOp = ['÷','×','−','+','='].includes(k);
+    const isFunc = ['C','±','%'].includes(k);
+    btn.className = 'calc-key' + (isOp ? ' op' : '') + (isFunc ? ' func' : '') + (k === '0' ? ' zero' : '');
+    btn.textContent = k;
+    btn.addEventListener('click', () => {
+      // Panic key: "1" alone fires SOS instantly (and drops back to the real app so help is confirmed).
+      if(k === '1'){
+        stealthOverlay.classList.remove('show');
+        fireSOS('stealth');
+        return;
+      }
+      // Exit key: "−" alone just quietly returns to the real app, no alert sent.
+      if(k === '−'){
+        stealthOverlay.classList.remove('show');
+        return;
+      }
+      if(k === 'C'){ calcCurrent='0'; calcPrev=null; calcOp=null; }
+      else if(k === '±'){ calcCurrent = String(parseFloat(calcCurrent) * -1); }
+      else if(k === '%'){ calcCurrent = String(parseFloat(calcCurrent) / 100); }
+      else if(['÷','×','−','+'].includes(k)){
+        if(calcOp && !calcReset){ calcCurrent = String(calcCompute(calcPrev, calcCurrent, calcOp)); }
+        calcPrev = calcCurrent; calcOp = k; calcReset = true;
+      } else if(k === '='){
+        if(calcOp){ calcCurrent = String(calcCompute(calcPrev, calcCurrent, calcOp)); calcOp=null; calcPrev=null; }
+      } else if(k === '.'){
+        if(calcReset){ calcCurrent = '0.'; calcReset=false; }
+        else if(!calcCurrent.includes('.')) calcCurrent += '.';
+      } else {
+        if(calcCurrent === '0' || calcReset){ calcCurrent = k; calcReset=false; }
+        else calcCurrent += k;
+      }
+      calcRender();
+    });
+    calcGrid.appendChild(btn);
+  });
+
+  stealthToggle.addEventListener('click', () => {
+    stealthOverlay.classList.add('show');
+    calcCurrent='0'; calcPrev=null; calcOp=null; calcRender();
+  });
+  let pressStart = null;
+  const calcDisplayEl = document.getElementById('calcDisplay');
+  function startExitPress(){ pressStart = setTimeout(() => { stealthOverlay.classList.remove('show'); }, 1200); }
+  function cancelExitPress(){ clearTimeout(pressStart); }
+  calcDisplayEl.addEventListener('pointerdown', startExitPress);
+  calcDisplayEl.addEventListener('pointerup', cancelExitPress);
+  calcDisplayEl.addEventListener('pointerleave', cancelExitPress);
+
+  // ================= Voice trigger (always-on, no toggle needed) =================
+  const voiceIndicator = document.getElementById('voiceIndicator');
+  const voiceIndicatorText = document.getElementById('voiceIndicatorText');
+  const voicePhraseInput = document.getElementById('voicePhrase');
+  const voiceStatus = document.getElementById('voiceStatus');
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null;
+  let voiceShouldRun = true; // always want to be listening, unless mic access is denied
+
+  function normalize(s){ return s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim(); }
+
+  function startRecognition(){
+    if(!SpeechRecognitionAPI || !voiceShouldRun) return;
+    recognition = new SpeechRecognitionAPI();
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      voiceIndicator.classList.add('live');
+      voiceIndicator.classList.remove('denied');
+      voiceIndicatorText.textContent = `Always listening for "${voicePhraseInput.value || 'bingo'}"`;
+    };
+    recognition.onresult = (e) => {
+      const last = e.results[e.results.length - 1];
+      const transcript = normalize(last[0].transcript);
+      const phrase = normalize(voicePhraseInput.value || 'bingo');
+      voiceStatus.textContent = `Heard: "${last[0].transcript}"`;
+      if(phrase && transcript.includes(phrase)){
+        fireSOS('voice');
+        voiceStatus.textContent = `Trigger word detected — SOS sent.`;
+      }
+    };
+    recognition.onerror = (e) => {
+      if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+        voiceShouldRun = false;
+        voiceIndicator.classList.remove('live');
+        voiceIndicator.classList.add('denied');
+        voiceIndicatorText.textContent = 'Voice trigger needs mic access';
+        voiceStatus.textContent = 'Tap anywhere on the page to grant microphone access.';
+      }
+      // Other errors (like brief "no-speech" timeouts) are expected during quiet moments — onend handles the restart.
+    };
+    recognition.onend = () => {
+      if(voiceShouldRun){ try{ recognition.start(); }catch(err){} }
+      else { voiceIndicator.classList.remove('live'); }
+    };
+    try{ recognition.start(); }catch(err){ /* will retry on first user interaction below */ }
+  }
+
+  if(!SpeechRecognitionAPI){
+    voiceIndicatorText.textContent = 'Voice trigger unsupported in this browser';
+    voiceStatus.textContent = 'Try Chrome for the "bingo" wake-word demo.';
+  } else {
+    // Try to start immediately on load.
+    startRecognition();
+    // Some browsers block mic access without a user gesture — first tap/click anywhere retries it.
+    const retryOnInteraction = () => {
+      if(voiceShouldRun && (!recognition || voiceStatus.textContent.includes('Tap anywhere'))){
+        voiceShouldRun = true;
+        startRecognition();
+      }
+      document.removeEventListener('click', retryOnInteraction);
+    };
+    document.addEventListener('click', retryOnInteraction);
+  }
+
+  // Changing the trigger word updates the live indicator label immediately.
+  voicePhraseInput.addEventListener('input', () => {
+    if(voiceIndicator.classList.contains('live')){
+      voiceIndicatorText.textContent = `Always listening for "${voicePhraseInput.value || 'bingo'}"`;
+    }
+  });
+</script>
+
+</body>
+</html>
